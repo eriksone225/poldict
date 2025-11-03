@@ -1,0 +1,159 @@
+
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user in the system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The user's name."
+        },
+        "points": {
+          "type": "number",
+          "description": "The user's total points."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "points"
+      ]
+    },
+    "Votable": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Votable",
+      "type": "object",
+      "description": "Represents a votable item.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Votable entity."
+        },
+        "creatorName": {
+          "type": "string",
+          "description": "The name of the user who created the votable item."
+        },
+        "title": {
+          "type": "string",
+          "description": "The main question or title of the prediction."
+        },
+        "description": {
+          "type": "string",
+          "description": "An optional, longer description for the votable item."
+        },
+        "passcode": {
+            "type": "string",
+            "description": "A passcode set by the creator for admin actions."
+        },
+        "outcome": {
+          "type": "string",
+          "description": "Description of the possible outcome of the votable."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["open", "closed"],
+          "description": "The status of the votable."
+        }
+      },
+      "required": [
+        "id",
+        "creatorName",
+        "title",
+        "passcode",
+        "status"
+      ]
+    },
+    "Vote": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Vote",
+      "type": "object",
+      "description": "Represents a user's vote on a votable item.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Vote entity."
+        },
+        "voterName": {
+          "type": "string",
+          "description": "The name of the user who cast the vote."
+        },
+        "votableId": {
+          "type": "string",
+          "description": "Reference to Votable. (Relationship: Votable 1:N Vote) The votable item being voted on."
+        },
+        "prediction": {
+          "type": "boolean",
+          "description": "The user's prediction (true/false) for the votable outcome."
+        }
+      },
+      "required": [
+        "id",
+        "voterName",
+        "votableId",
+        "prediction"
+      ]
+    }
+  },
+  "auth": {
+    "providers": []
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/votables/{votableId}",
+        "definition": {
+          "entityName": "Votable",
+          "schema": {
+            "$ref": "#/backend/entities/Votable"
+          },
+          "description": "Stores votable items.",
+          "params": [
+            {
+              "name": "votableId",
+              "description": "The unique identifier of the votable item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/votes/{voteId}",
+        "definition": {
+          "entityName": "Vote",
+          "schema": {
+            "$ref": "#/backend/entities/Vote"
+          },
+          "description": "Stores votes cast by users.",
+          "params": [
+            {
+              "name": "voteId",
+              "description": "The unique identifier of the vote."
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
