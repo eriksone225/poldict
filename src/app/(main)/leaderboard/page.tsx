@@ -1,9 +1,17 @@
-import { LeaderboardTable } from "@/components/leaderboard/LeaderboardTable";
-import { getUsers } from "@/lib/data";
-import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 
-export default async function LeaderboardPage() {
+'use client';
+
+import { LeaderboardTable } from "@/components/leaderboard/LeaderboardTable";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { getUsersQuery } from '@/lib/queries';
+import type { User } from '@/lib/definitions';
+
+export default function LeaderboardPage() {
+  const firestore = useFirestore();
+  const usersQuery = useMemoFirebase(() => getUsersQuery(), [firestore]);
+  const { data: users, isLoading } = useCollection<User>(usersQuery);
+
   return (
     <div className="space-y-6">
       <div>
@@ -12,16 +20,13 @@ export default async function LeaderboardPage() {
           See who is at the top of their prediction game.
         </p>
       </div>
-      <Suspense fallback={<LeaderboardSkeleton />}>
-        <LeaderboardData />
-      </Suspense>
+      {isLoading || !users ? (
+        <LeaderboardSkeleton />
+      ) : (
+        <LeaderboardTable users={users} />
+      )}
     </div>
   );
-}
-
-async function LeaderboardData() {
-  const users = await getUsers();
-  return <LeaderboardTable users={users} />;
 }
 
 function LeaderboardSkeleton() {

@@ -1,15 +1,15 @@
 
 'use server';
 
-import { collection, doc, getDoc, getDocs, setDoc, deleteDoc, runTransaction, query, where, orderBy, Timestamp, writeBatch, documentId, addDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, setDoc, deleteDoc, runTransaction, query, where, orderBy, Timestamp, writeBatch, addDoc } from 'firebase/firestore';
 import { firestore } from '@/firebase/init';
 import type { User, Votable, Vote } from './definitions';
 
 // User functions
 export const getUsers = async (): Promise<User[]> => {
     const usersCol = collection(firestore, 'users');
-    const q = query(usersCol, orderBy('points', 'desc'));
-    const userSnapshot = await getDocs(q);
+    const usersQuery = query(usersCol, orderBy('points', 'desc'));
+    const userSnapshot = await getDocs(usersQuery);
     const users = userSnapshot.docs.map(doc => ({...doc.data(), id: doc.id} as User));
     return users;
 };
@@ -44,10 +44,8 @@ export const addOrUpdateUserAndGetId = async (name: string): Promise<string> => 
 // Votable functions
 export const getVotables = async (): Promise<Votable[]> => {
     const votablesCol = collection(firestore, 'votables');
-    // The composite index was removed to prevent errors on first load.
-    // The data is now sorted client-side to show special events first.
-    const q = query(votablesCol, orderBy('createdAt', 'desc'));
-    const votableSnapshot = await getDocs(q);
+    const votablesQuery = query(votablesCol, orderBy('createdAt', 'desc'));
+    const votableSnapshot = await getDocs(votablesQuery);
     const votables = votableSnapshot.docs.map(doc => {
         const data = doc.data();
         return { 

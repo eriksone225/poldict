@@ -46,6 +46,7 @@ export async function createVotable(prevState: any, formData: FormData) {
     return { message: 'Database Error: Failed to create votable.' };
   }
 
+  // Revalidation is less critical with real-time, but good for pull-to-refresh or tab refocus.
   revalidatePath('/dashboard');
   return { message: 'success' };
 }

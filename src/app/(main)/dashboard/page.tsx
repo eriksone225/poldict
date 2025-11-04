@@ -1,12 +1,41 @@
 
-import { getVotables, getVotesForVotables } from "@/lib/data";
+'use client';
+
+import { useMemo } from 'react';
 import VotableList from "@/components/votables/VotableList";
-import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreateVotableDialog } from "@/components/votables/CreateVotableDialog";
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { getVotablesQuery, getVotesQuery } from '@/lib/queries';
+import type { Votable, Vote } from '@/lib/definitions';
 
-// This is now a Server Component
 export default function DashboardPage() {
+  const firestore = useFirestore();
+  const votablesQuery = useMemoFirebase(() => getVotablesQuery(), [firestore]);
+  const votesQuery = useMemoFirebase(() => getVotesQuery(), [firestore]);
+
+  const { data: votables, isLoading: isLoadingVotables } = useCollection<Votable>(votablesQuery);
+  const { data: votes, isLoading: isLoadingVotes } = useCollection<Vote>(votesQuery);
+
+  const votablesWithVotes = useMemo(() => {
+    if (!votables || !votes) return [];
+    
+    const votesByVotableId = votes.reduce((acc, vote) => {
+      if (!acc[vote.votableId]) {
+        acc[vote.votableId] = [];
+      }
+      acc[vote.votableId].push(vote);
+      return acc;
+    }, {} as Record<string, Vote[]>);
+
+    return votables.map(votable => ({
+      ...votable,
+      votes: votesByVotableId[votable.id] || [],
+    })).sort((a, b) => (b.isSpecialEvent ? 1 : 0) - (a.isSpecialEvent ? 1 : 0));
+  }, [votables, votes]);
+
+  const isLoading = isLoadingVotables || isLoadingVotes;
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -16,31 +45,16 @@ export default function DashboardPage() {
             Vote on predictions and see what others think.
           </p>
         </div>
-        <div className="hidden md:block">
-            <CreateVotableDialog />
-        </div>
+        <CreateVotableDialog />
       </div>
-      <Suspense fallback={<VotableListSkeleton />}>
-        {/* VotableData is now directly awaited inside the Server Component */}
-        <VotableData />
-      </Suspense>
+      
+      {isLoading ? (
+        <VotableListSkeleton />
+      ) : (
+        <VotableList votables={votablesWithVotes} />
+      )}
     </div>
   );
-}
-
-// VotableData remains an async function to fetch data on the server
-async function VotableData() {
-  const votables = await getVotables();
-  const votableIds = votables.map(v => v.id);
-  const votesByVotable = await getVotesForVotables(votableIds);
-
-  const votablesWithVotes = votables.map(votable => ({
-    ...votable,
-    votes: votesByVotable[votable.id] || [],
-  }));
-
-  // VotableList is a Client Component that receives the fetched data as props
-  return <VotableList votables={votablesWithVotes} />;
 }
 
 function VotableListSkeleton() {
