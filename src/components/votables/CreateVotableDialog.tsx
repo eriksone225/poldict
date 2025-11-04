@@ -49,6 +49,7 @@ const formSchema = z.object({
 
 export function CreateVotableDialog() {
   const [isOpen, setIsOpen] = useState(false);
+  const { toast } = useToast();
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
